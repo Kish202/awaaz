@@ -1,0 +1,40 @@
+# Gojri / Gujari (ISO 639-3: gju). Perso-Arabic (Nastaliq) orthography, shared with Urdu.
+code: gju
+name: Gojri
+# Common Voice uses "gju" as the locale directory name.
+common_voice_locale: gju
+# Whisper has no Gojri token. Urdu shares the script and most of the phonology,
+# so we condition the decoder on Urdu and let fine-tuning move it from there.
+whisper_language: urdu
+
+text:
+  # Characters that must never be mapped away by the Urdu normaliser. Gojri uses
+  # a small number of letters that distinguish it from Urdu/Punjabi/Pahari.
+  # Fill this in with the exact code points once confirmed against the Common
+  # Voice gju sentence corpus (see `lowres-asr charset`).
+  preserve_chars: []
+  strip_diacritics: true
+  strip_zwnj: false
+  digits: ascii          # ascii | urdu | keep
+
+sentences:
+  min_words: 2
+  max_words: 14
+  # Common Voice rejects sentences with digits, abbreviations and foreign script.
+  reject_digits: true
+  reject_latin: true
+  reject_urls: true
+  # Sentence terminators used to split running text.
+  terminators: ["۔", "؟", "!", ".", "?"]
+
+train:
+  base_model: openai/whisper-small
+  sampling_rate: 16000
+  max_audio_seconds: 30
+  batch_size: 8
+  grad_accum: 2
+  learning_rate: 1.0e-5
+  warmup_steps: 100
+  max_steps: 2000
+  eval_steps: 250
+  save_steps: 250

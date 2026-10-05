@@ -1,0 +1,30 @@
+# Infrastructure for local development and small production deployments.
+#   docker compose up -d
+# Then run the API and worker on the host (or add them as services; see README).
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: awaaz
+      POSTGRES_PASSWORD: awaaz
+      POSTGRES_DB: awaaz
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U awaaz"]
+      interval: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+volumes:
+  pgdata:
+  redisdata:

@@ -1,0 +1,31 @@
+# Pahari-Pothwari (ISO 639-3: phr). Written in Urdu orthography, right-to-left.
+code: phr
+name: Pahari-Pothwari
+common_voice_locale: phr
+whisper_language: urdu
+
+text:
+  preserve_chars: []
+  strip_diacritics: true
+  strip_zwnj: false
+  digits: ascii
+
+sentences:
+  min_words: 2
+  max_words: 14
+  reject_digits: true
+  reject_latin: true
+  reject_urls: true
+  terminators: ["۔", "؟", "!", ".", "?"]
+
+train:
+  base_model: openai/whisper-small
+  sampling_rate: 16000
+  max_audio_seconds: 30
+  batch_size: 8
+  grad_accum: 2
+  learning_rate: 1.0e-5
+  warmup_steps: 100
+  max_steps: 3000
+  eval_steps: 250
+  save_steps: 250

@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+build/
+dist/
+.pytest_cache/
+.ruff_cache/
+
+# Data and models are never committed. Common Voice tarballs are tens of GB.
+data/raw/
+data/processed/
+data/recordings/
+data/sentences/out/
+models/
+runs/
+*.mp3
+*.wav
+*.tgz
+*.tar.gz
+
+# OS
+.DS_Store
+.env

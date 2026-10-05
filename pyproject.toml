@@ -1,0 +1,66 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lowres-asr"
+version = "0.1.0"
+description = "Sentence sourcing and ASR fine-tuning for Gojri (gju) and Pahari-Pothwari (phr) on Common Voice data."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    "pyyaml>=6.0",
+    "regex>=2024.0.0",
+]
+
+[project.optional-dependencies]
+# Everything needed to load Common Voice audio, fine-tune Whisper and evaluate.
+train = [
+    "torch>=2.2",
+    "torchaudio>=2.2",
+    "transformers>=4.46",
+    "datasets[audio]>=2.20",
+    "accelerate>=0.30",
+    "evaluate>=0.4",
+    "jiwer>=3.0",
+    "soundfile>=0.12",
+    "librosa>=0.10",
+]
+# Pull text out of scanned/printed PDFs for the sentence pipeline.
+pdf = [
+    "pypdf>=4.0",
+]
+# HTTP API + contribution platform behind the web UI in web/.
+# Needs PostgreSQL, Redis and ffmpeg at runtime.
+api = [
+    "fastapi>=0.115",
+    "uvicorn[standard]>=0.30",
+    "python-multipart>=0.0.9",
+    "pydantic-settings>=2.4",
+    "sqlalchemy>=2.0",
+    "psycopg[binary]>=3.2",
+    "alembic>=1.13",
+    "celery[redis]>=5.4",
+    "slowapi>=0.1.9",
+    "cloudinary>=1.40",
+]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+lowres-asr = "lowres_asr.cli:main"
+lowres-asr-api = "lowres_asr.api:main"
+lowres-asr-worker = "lowres_asr.queue.celery_app:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
