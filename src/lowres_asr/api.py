@@ -10,8 +10,10 @@ Requires:  pip install -e '.[api]'   and a reachable PostgreSQL + Redis + ffmpeg
 
 from __future__ import annotations
 
+import logging
 import os
 import tempfile
+from contextlib import asynccontextmanager
 from functools import lru_cache
 from pathlib import Path
 from typing import Annotated
@@ -23,15 +25,37 @@ from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
 from .config import CONFIG_DIR, load_config
-from .routers import contributors, recordings, sentences, stats, validations
+from .routers import contributors, prompts, recordings, sentences, stats, validations
 from .settings import get_settings
 from .text.normalize import char_inventory, normalize, normalize_for_asr
 from .text.sentences import extract_sentences
 
+log = logging.getLogger(__name__)
+
+
+@asynccontextmanager
+async def _lifespan(app: FastAPI):
+    if get_settings().auto_seed_prompts:
+        # A fresh deployment should have questions to ask without a manual step.
+        # Never fail start-up over it: the text tools work without a database.
+        try:
+            from .db import SessionLocal
+            from .prompts.seed import seed_if_empty
+
+            db = SessionLocal()
+            try:
+                if seed_if_empty(db):
+                    log.info("prompt bank seeded")
+            finally:
+                db.close()
+        except Exception as exc:  # noqa: BLE001
+            log.warning("prompt auto-seed skipped: %s", exc)
+    yield
+
 
 def create_app() -> FastAPI:
     s = get_settings()
-    app = FastAPI(title="awaaz / lowres-asr", version="0.2.0")
+    app = FastAPI(title="awaaz / lowres-asr", version="0.3.0", lifespan=_lifespan)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=s.cors_origins,
@@ -45,6 +69,7 @@ def create_app() -> FastAPI:
     app.include_router(sentences.router)
     app.include_router(recordings.router)
     app.include_router(validations.router)
+    app.include_router(prompts.router)
     app.include_router(stats.router)
     _register_text_tools(app)
     return app

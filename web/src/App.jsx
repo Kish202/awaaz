@@ -8,6 +8,7 @@ import Hero from '@/components/Hero'
 import WhatIsThis from '@/components/WhatIsThis'
 import LiveStats from '@/components/LiveStats'
 import ConsentGate from '@/components/ConsentGate'
+import Talk from '@/components/Talk'
 import Contribute from '@/components/Contribute'
 import Listen from '@/components/Listen'
 import SentenceStudio from '@/components/SentenceStudio'
@@ -16,11 +17,12 @@ import Charset from '@/components/Charset'
 import Pipeline from '@/components/Pipeline'
 
 const TABS = [
+  ['talk', 'Talk'],
   ['contribute', 'Speak'],
   ['listen', 'Listen'],
-  ['sentences', 'Sentence studio'],
+  ['sentences', 'Add text'],
   ['transcribe', 'Transcribe'],
-  ['charset', 'Character inventory'],
+  ['charset', 'Characters'],
 ]
 
 export default function App() {
@@ -33,7 +35,7 @@ export default function App() {
   }
   const l = byCode(lang)
 
-  // Speak and Listen need a consenting contributor; everything else does not.
+  // Talk, Speak and Listen need a consenting contributor; everything else does not.
   const gated = (node) =>
     contributor ? node : <ConsentGate langName={l.name} onConsent={consent} />
 
@@ -46,7 +48,7 @@ export default function App() {
         <LiveStats lang={lang} tick={tick} />
 
         <section id="workbench" className="mx-auto max-w-6xl px-6 pb-24">
-          <Tabs defaultValue="contribute">
+          <Tabs defaultValue="talk">
             <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
               <TabsList className="h-11 rounded-full border border-border/80 bg-card/60 p-1">
                 {TABS.map(([v, label]) => (
@@ -65,7 +67,7 @@ export default function App() {
                   {contributor.display_name ? contributor.display_name : 'Anonymous contributor'}
                   {profile && (
                     <span className="text-muted-foreground/70">
-                      · {profile.recording_count} clips · {profile.validation_count} reviews
+                      · {profile.response_count} answers · {profile.recording_count} clips · {profile.validation_count} reviews
                     </span>
                   )}
                   <Button variant="link" size="sm" onClick={forget} className="h-auto p-0 text-xs text-muted-foreground/70">
@@ -77,6 +79,9 @@ export default function App() {
               )}
             </div>
 
+            <TabsContent value="talk" className="rise">
+              {gated(<Talk key={lang} lang={lang} contributor={contributor} onAnswered={bump} />)}
+            </TabsContent>
             <TabsContent value="contribute" className="rise">
               {gated(<Contribute key={lang} lang={lang} contributor={contributor} onRecorded={bump} />)}
             </TabsContent>

@@ -58,10 +58,12 @@ export default function Listen({ lang, contributor, onValidated }) {
     <div className="grid gap-6 lg:grid-cols-[minmax(0,7fr)_minmax(0,5fr)]">
       <Panel
         eyebrow={`Listen · ${l.name}`}
-        title={current ? 'Does the recording match the sentence?' : loading ? 'Loading…' : 'Nothing to review'}
+        title={current ? 'Does the recording match the text?' : loading ? 'Loading…' : 'Nothing to review'}
         description={
           current
-            ? 'Mark it good only if every word is spoken clearly and nothing is added or missing.'
+            ? current.prompt_en
+              ? 'This is an answer to a question. Mark it good if the speaker says what is written, even if the wording is casual.'
+              : 'Mark it good only if every word is spoken clearly and nothing is added or missing.'
             : loading
               ? ''
               : 'Every clip by other contributors has been reviewed by you already. Record some of your own instead.'
@@ -69,6 +71,12 @@ export default function Listen({ lang, contributor, onValidated }) {
       >
         {current ? (
           <>
+            {current.prompt_en && (
+              <p className="mb-3 text-center text-xs text-muted-foreground">
+                <span className="text-gold/80">awaaz asked:</span> {current.prompt_en}
+                {current.prompt_hi && <span className="font-devanagari ms-2 text-muted-foreground/80">{current.prompt_hi}</span>}
+              </p>
+            )}
             <div
               dir="rtl"
               className="font-nastaliq flex min-h-36 items-center justify-center rounded-xl border border-border/60 bg-background/40 px-8 py-6 text-center text-3xl text-ivory"

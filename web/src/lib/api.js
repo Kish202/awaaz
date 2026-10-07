@@ -70,6 +70,24 @@ export const api = {
   validate: (recordingId, contributorId, verdict) =>
     request('/api/validations', json({ recording_id: recordingId, contributor_id: contributorId, verdict })),
   stats: (lang) => request(`/api/stats?lang=${lang}`),
+
+  // Talk: the bot asks, the contributor answers
+  promptCategories: () => request('/api/prompts/categories'),
+  nextPrompts: (lang, contributorId, { category, kind, limit = 5 } = {}) => {
+    const q = new URLSearchParams({ lang, contributor_id: contributorId, limit })
+    if (category) q.set('category', category)
+    if (kind) q.set('kind', kind)
+    return request(`/api/prompts/next?${q}`)
+  },
+  submitResponse: (contributorId, promptId, lang, { text, file } = {}) => {
+    const form = new FormData()
+    form.append('contributor_id', contributorId)
+    form.append('prompt_id', promptId)
+    form.append('lang', lang)
+    if (text) form.append('text', text)
+    if (file) form.append('file', file)
+    return request('/api/responses', { method: 'POST', body: form })
+  },
 }
 
 /** Poll a recording until the worker has settled it (or we give up). */

@@ -49,10 +49,14 @@ export default function ConsentGate({ onConsent, langName }) {
   return (
     <Panel
       eyebrow="Before you start"
-      title="Your voice, given freely"
-      description={`Recordings of ${langName} speech are only useful if they can be shared openly with everyone who wants to build tools for the language. Please read and agree to the two points below.`}
+      title="Please give your consent"
       className="mx-auto max-w-2xl"
     >
+      <p className="mb-7 text-lg font-bold leading-relaxed text-foreground">
+        Please give your consent to use your {langName} contributions — your voice and your
+        written answers — to build open speech tools for the language. Tick both boxes below,
+        then click Continue to contribute.
+      </p>
       <form onSubmit={submit} className="space-y-7">
         <fieldset className="space-y-4">
           <ConsentRow
@@ -119,7 +123,7 @@ export default function ConsentGate({ onConsent, langName }) {
           </p>
           <Button type="submit" disabled={!cc0 || !storage || busy} className="gap-2">
             {busy ? <Loader2 className="size-4 animate-spin" /> : <ShieldCheck className="size-4" />}
-            Agree and continue
+            Continue to contribute
           </Button>
         </div>
       </form>

@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter, HTTPException
 from sqlalchemy import func, select
 
-from ..db import Contributor, Recording, Validation
+from ..db import Contributor, Recording, Response, Validation
 from .deps import DB
 from .schemas import CONSENT_VERSION, ContributorCreate, ContributorOut
 
@@ -33,10 +33,10 @@ def create_contributor(body: ContributorCreate, db: DB) -> ContributorOut:
     db.add(c)
     db.commit()
     db.refresh(c)
-    return _out(c, 0, 0)
+    return _out(c, 0, 0, 0)
 
 
-def _out(c: Contributor, recs: int, vals: int) -> ContributorOut:
+def _out(c: Contributor, recs: int, vals: int, answers: int) -> ContributorOut:
     return ContributorOut(
         id=c.id,
         display_name=c.display_name,
@@ -44,6 +44,7 @@ def _out(c: Contributor, recs: int, vals: int) -> ContributorOut:
         created_at=c.created_at,
         recording_count=recs,
         validation_count=vals,
+        response_count=answers,
     )
 
 
@@ -56,4 +57,5 @@ def get_contributor(contributor_id: uuid.UUID, db: DB) -> ContributorOut:
     db.commit()
     recs = db.scalar(select(func.count(Recording.id)).where(Recording.contributor_id == c.id)) or 0
     vals = db.scalar(select(func.count(Validation.id)).where(Validation.contributor_id == c.id)) or 0
-    return _out(c, recs, vals)
+    answers = db.scalar(select(func.count(Response.id)).where(Response.contributor_id == c.id)) or 0
+    return _out(c, recs, vals, answers)

@@ -96,9 +96,20 @@ gives a smoke test on a laptop. Real training wants a GPU (Colab/Kaggle T4 is en
 
 ## Contribution platform ("awaaz")
 
-`web/` is a React + Tailwind + shadcn/ui front end where people **speak** sentences,
-**listen** to and validate each other's clips, and **add text** to the sentence pool. Every
-contribution is stored. The backend is FastAPI + PostgreSQL + Celery/Redis + ffmpeg.
+`web/` is a React + Tailwind + shadcn/ui front end with four ways to contribute:
+
+- **Talk** (default). A bot asks a question in English and Hindi; the contributor answers
+  in Gojri/Pahari by typing, by voice, or both. Nobody has to think of what to say. The
+  bank has 1,200+ prompts in three kinds: open *questions* ("What did you eat today?" →
+  spontaneous speech), *translate* ("How do you say: 'It is raining'?" → controlled
+  sentences) and *word* ("What do you call 'mother'?" → vocabulary), across 35 topics
+  (food, family, farming, weather, festivals, …). Edit `src/lowres_asr/prompts/bank.py`,
+  then `lowres-asr seed-prompts` (the API also seeds an empty table at start-up).
+- **Speak**: read sentences from the pool aloud (classic Common Voice style).
+- **Listen**: validate other people's clips against their text.
+- **Add text**: paste existing text to grow the sentence pool.
+
+Every contribution is stored. The backend is FastAPI + PostgreSQL + Celery/Redis + ffmpeg.
 
 ```
 browser ──upload──▶ FastAPI ──row──▶ PostgreSQL
@@ -135,14 +146,19 @@ only a random server-issued UUID in `localStorage`; "forget me on this device" r
 | table | one row per |
 |---|---|
 | `contributors` | consenting person (anonymous unless they typed a name) |
+| `prompts` | one question in English + Hindi (`kind`: question / translate / word; `category`) |
+| `responses` | one contributor's answer to one prompt in one language: `text` and/or a recording. Text that passes the sentence rules is copied into `sentences` (`sentence_id`); otherwise `pool_reason` says why not (e.g. `too_long`). |
 | `sentences` | unique normalised sentence per language, with `recording_count` |
-| `recordings` | one clip of one contributor reading one sentence; status machine `uploaded → processing → ready → validated / rejected` |
+| `recordings` | one clip of one contributor, either reading a sentence (`sentence_id`) or answering a prompt (`response_id`); status machine `uploaded → processing → ready → validated / rejected` |
 | `validations` | one contributor's verdict on one recording (unique pair) |
 
-A recording becomes `validated` after `VOTES_TO_SETTLE` (default 2) "good" votes from
-other contributors, or `rejected` after as many "bad" votes. `GET /api/export/{lang}.tsv`
-(admin token) streams the validated `(wav_path, sentence, speaker_id, duration)` manifest for
-training.
+Read-aloud clips are capped at `MAX_CLIP_SECONDS` (15 s); answers at
+`MAX_RESPONSE_SECONDS` (60 s). A recording becomes `validated` after `VOTES_TO_SETTLE`
+(default 2) "good" votes from other contributors, or `rejected` after as many "bad" votes.
+Only clips that have text (a sentence or a typed answer) enter the review queue; voice-only
+answers are kept as spontaneous speech for later transcription. `GET /api/export/{lang}.tsv`
+(admin token) streams the validated `(path, sentence, speaker_id, duration_s, style, prompt_en)`
+manifest for training, where `style` is `read` or `answer`.
 
 ### Run it
 
@@ -196,8 +212,9 @@ src/lowres_asr/
   settings.py       env/.env configuration (pydantic-settings)
   db/               SQLAlchemy models and session
   storage.py        audio storage: Cloudinary (production) or local disk (dev)
+  prompts/          Talk question bank (bank.py) and seeding (seed.py)
   queue/            Celery app and tasks (process_recording, ingest_sentences)
-  routers/          contributors, sentences, recordings, validations, stats/export
+  routers/          contributors, prompts (Talk), sentences, recordings, validations, stats/export
 alembic/            database migrations
 tests/              unit tests for the text pipeline (no audio or torch needed)
 web/                React + Tailwind + shadcn/ui front end

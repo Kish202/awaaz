@@ -32,7 +32,9 @@ class Settings(BaseSettings):
 
     # Recording acceptance rules applied by the worker.
     min_clip_seconds: float = 1.0
-    max_clip_seconds: float = 15.0
+    max_clip_seconds: float = 15.0  # reading a sentence
+    max_response_seconds: float = 60.0  # answering a question in Talk
+    auto_seed_prompts: bool = True  # load the question bank at start-up if the table is empty
     silence_rms_threshold: float = 0.004  # fraction of full scale; below this the clip is treated as silent
     target_sample_rate: int = 16000
 

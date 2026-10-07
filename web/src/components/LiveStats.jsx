@@ -39,7 +39,8 @@ export default function LiveStats({ lang, tick = 0 }) {
           The database is not reachable. Start <code className="font-mono text-gold-soft/80">lowres-asr-api</code> and the worker to see live numbers.
         </p>
       ) : (
-        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border/80 bg-border/60 sm:grid-cols-5">
+        <div className="grid grid-cols-2 gap-px overflow-hidden rounded-xl border border-border/80 bg-border/60 sm:grid-cols-3 lg:grid-cols-6">
+          <StatCard label="Answers given" value={stats ? stats.responses.toLocaleString() : '—'} />
           <StatCard label="Sentences to read" value={stats ? stats.sentences.toLocaleString() : '—'} />
           <StatCard label="Contributors" value={stats ? stats.contributors.toLocaleString() : '—'} />
           <StatCard label="Clips recorded" value={stats ? stats.recordings_total.toLocaleString() : '—'} />

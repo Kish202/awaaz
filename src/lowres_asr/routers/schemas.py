@@ -33,6 +33,7 @@ class ContributorOut(BaseModel):
     created_at: datetime
     recording_count: int = 0
     validation_count: int = 0
+    response_count: int = 0
 
     model_config = {"from_attributes": True}
 
@@ -59,9 +60,38 @@ class QueuedOut(BaseModel):
     queued: int
 
 
+class PromptOut(BaseModel):
+    id: uuid.UUID
+    category: str
+    kind: str
+    text_en: str
+    text_hi: str
+    response_count: int
+
+    model_config = {"from_attributes": True}
+
+
+class CategoryOut(BaseModel):
+    key: str
+    label_en: str
+    label_hi: str
+    prompts: int
+
+
+class ResponseOut(BaseModel):
+    id: uuid.UUID
+    prompt_id: uuid.UUID
+    lang: str
+    text: str | None
+    added_to_pool: bool
+    pool_reason: str | None
+    recording: RecordingOut | None
+
+
 class RecordingOut(BaseModel):
     id: uuid.UUID
-    sentence_id: uuid.UUID
+    sentence_id: uuid.UUID | None
+    response_id: uuid.UUID | None = None
     lang: str
     status: str
     duration_s: float | None
@@ -78,6 +108,9 @@ class ValidationItem(BaseModel):
     lang: str
     duration_s: float | None
     audio_url: str
+    # Set when the clip answers a prompt: show the reviewer what was asked.
+    prompt_en: str | None = None
+    prompt_hi: str | None = None
 
 
 class ValidationIn(BaseModel):
@@ -88,6 +121,8 @@ class ValidationIn(BaseModel):
 
 class StatsOut(BaseModel):
     lang: str
+    prompts: int
+    responses: int
     sentences: int
     recordings_total: int
     recordings_ready: int

@@ -124,6 +124,18 @@ def cmd_evaluate(args: argparse.Namespace) -> None:
     print(f"CER:   {res['cer']:.2f}")
 
 
+def cmd_seed_prompts(args: argparse.Namespace) -> None:
+    from .db import SessionLocal
+    from .prompts.seed import seed_prompts
+
+    db = SessionLocal()
+    try:
+        r = seed_prompts(db)
+    finally:
+        db.close()
+    print(f"bank {r['bank']} prompts · inserted {r['inserted']} · table now {r['total']}")
+
+
 def cmd_transcribe(args: argparse.Namespace) -> None:
     from .transcribe import WhisperTranscriber
 
@@ -188,6 +200,9 @@ def build_parser() -> argparse.ArgumentParser:
     s.add_argument("--batch-size", type=int, default=8)
     s.add_argument("files", nargs="+", type=Path)
     s.set_defaults(func=cmd_transcribe)
+
+    s = sub.add_parser("seed-prompts", help="load/refresh the Talk question bank into PostgreSQL")
+    s.set_defaults(func=cmd_seed_prompts)
 
     return p
 

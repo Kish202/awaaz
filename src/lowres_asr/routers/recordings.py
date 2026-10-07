@@ -46,33 +46,33 @@ def _ext_for(upload: UploadFile) -> str:
     return suffix or "bin"
 
 
-@router.post("", response_model=RecordingOut, status_code=202)
-@limiter.limit(get_settings().recording_rate_limit)
-async def upload_recording(
-    request: Request,
-    contributor_id: Annotated[uuid.UUID, Form()],
-    sentence_id: Annotated[uuid.UUID, Form()],
-    file: Annotated[UploadFile, File()],
-    db: DB,
-) -> Recording:
-    s = get_settings()
+def check_mime(file: UploadFile) -> str:
     mime = (file.content_type or "").split(";")[0].strip().lower()
     if mime and not mime.startswith(_ALLOWED_MIME_PREFIXES):
         raise HTTPException(415, f"Unsupported content type {mime}")
+    return mime
 
-    contributor = db.get(Contributor, contributor_id)
-    if contributor is None:
-        raise HTTPException(404, "Unknown contributor; give consent first.")
-    sentence = db.get(Sentence, sentence_id)
-    if sentence is None or sentence.status != SentenceStatus.approved:
-        raise HTTPException(404, "Unknown or unapproved sentence.")
 
+async def store_upload(
+    request: Request,
+    file: UploadFile,
+    *,
+    lang: str,
+    contributor_id: uuid.UUID,
+    sentence_id: uuid.UUID | None,
+    response_id: uuid.UUID | None,
+) -> Recording:
+    """Save the bytes, build the (uncommitted) Recording row. Shared by Speak and Talk.
+
+    Reads with a hard size cap into a spool (memory up to 1 MB, then a temp file), then
+    hands it to the storage backend off the event loop: Cloudinary uploads are blocking
+    network calls; local writes are cheap either way.
+    """
+    s = get_settings()
+    mime = check_mime(file)
     rec_id = uuid.uuid4()
-    key = recording_key(sentence.lang, str(rec_id), _ext_for(file))
+    key = recording_key(lang, str(rec_id), _ext_for(file))
 
-    # Read with a hard size cap into a spool (memory up to 1 MB, then a temp file),
-    # then hand it to the storage backend off the event loop. Cloudinary uploads are
-    # blocking network calls; local writes are cheap either way.
     written = 0
     with SpooledTemporaryFile(max_size=1024 * 1024) as spool:
         while chunk := await file.read(1024 * 256):
@@ -86,15 +86,38 @@ async def upload_recording(
         await run_in_threadpool(get_storage().save, key, spool, mime or None)
 
     ip = get_remote_address(request) or ""
-    rec = Recording(
+    return Recording(
         id=rec_id,
-        sentence_id=sentence.id,
-        contributor_id=contributor.id,
-        lang=sentence.lang,
+        sentence_id=sentence_id,
+        response_id=response_id,
+        contributor_id=contributor_id,
+        lang=lang,
         original_path=key,
         original_mime=mime or None,
         status=RecordingStatus.uploaded,
         client_ip_hash=hashlib.sha256(ip.encode()).hexdigest() if ip else None,
+    )
+
+
+@router.post("", response_model=RecordingOut, status_code=202)
+@limiter.limit(get_settings().recording_rate_limit)
+async def upload_recording(
+    request: Request,
+    contributor_id: Annotated[uuid.UUID, Form()],
+    sentence_id: Annotated[uuid.UUID, Form()],
+    file: Annotated[UploadFile, File()],
+    db: DB,
+) -> Recording:
+    check_mime(file)
+    contributor = db.get(Contributor, contributor_id)
+    if contributor is None:
+        raise HTTPException(404, "Unknown contributor; give consent first.")
+    sentence = db.get(Sentence, sentence_id)
+    if sentence is None or sentence.status != SentenceStatus.approved:
+        raise HTTPException(404, "Unknown or unapproved sentence.")
+
+    rec = await store_upload(
+        request, file, lang=sentence.lang, contributor_id=contributor.id, sentence_id=sentence.id, response_id=None
     )
     db.add(rec)
     db.commit()

@@ -25,10 +25,11 @@ export default function Hero({ lang }) {
             text to train a model.
           </p>
           <p>
-            <span className="text-foreground">awaaz</span> is a workbench for fixing that. You
-            bring {l.name} text; it cleans the text into short sentences that volunteers can
-            read aloud on Mozilla Common Voice; those recordings train a speech recognizer; and
-            you can test that recognizer here with your own voice.
+            <span className="text-foreground">awaaz</span> collects that speech, one answer at a
+            time. It asks you simple questions in English or Hindi and you reply in {l.name},
+            typed or spoken. Other speakers check the clips. Everything collected is released
+            freely so anyone can build a {l.name} speech recognizer; a first one is being
+            trained here.
           </p>
         </div>
         <p

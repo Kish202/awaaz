@@ -102,19 +102,23 @@ def process_recording(self, recording_id: str) -> dict:
         rec.duration_s = round(duration, 3)
         rec.rms = round(rms, 5)
 
+        # Answers to questions may run long; read-aloud clips are one short sentence.
+        max_seconds = s.max_response_seconds if rec.response_id else s.max_clip_seconds
+
         # The ffmpeg filter trims leading/trailing silence, so an all-silent clip comes
         # out with (near) zero length. Report that as silence, not as too short.
         if duration < 0.05 or rms < s.silence_rms_threshold:
             rec.status, rec.reject_reason = RecordingStatus.rejected, "silent"
         elif duration < s.min_clip_seconds:
             rec.status, rec.reject_reason = RecordingStatus.rejected, "too_short"
-        elif duration > s.max_clip_seconds:
+        elif duration > max_seconds:
             rec.status, rec.reject_reason = RecordingStatus.rejected, "too_long"
         else:
             rec.status = RecordingStatus.ready
-            sentence = db.get(Sentence, rec.sentence_id)
-            if sentence is not None:
-                sentence.recording_count += 1
+            if rec.sentence_id is not None:
+                sentence = db.get(Sentence, rec.sentence_id)
+                if sentence is not None:
+                    sentence.recording_count += 1
 
         rec.processed_at = datetime.now(UTC)
         db.commit()

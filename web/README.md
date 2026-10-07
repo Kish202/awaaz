@@ -28,6 +28,7 @@ src/
   App.jsx                    shell: header, hero, tabbed workbench, pipeline, footer
   components/
     ConsentGate.jsx          one-time CC0 + storage consent, optional name/demographics
+    Talk.jsx                 "Talk": bot asks (EN/HI) -> type and/or record the answer -> next
     Contribute.jsx           "Speak": sentence -> record -> submit -> worker verdict -> next
     Listen.jsx               peer validation of other people's clips
     LiveStats.jsx            counts from the database
@@ -42,6 +43,7 @@ src/
     ErrorNote.jsx
     ui/                      shadcn components
   lib/api.js                 fetch wrapper for the FastAPI backend
+  lib/useRecorder.js         MediaRecorder hook shared by Talk and Speak
   lib/contributor.js         localStorage-backed anonymous contributor id + hook
   lib/languages.js           static language facts and rejection labels
 ```

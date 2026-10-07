@@ -12,6 +12,7 @@
   --font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
   --font-display: 'Cormorant Garamond', 'Times New Roman', serif;
   --font-nastaliq: 'Noto Nastaliq Urdu', 'Jameel Noori Nastaleeq', 'Noto Naskh Arabic', serif;
+  --font-devanagari: 'Noto Sans Devanagari', 'Kohinoor Devanagari', 'Nirmala UI', 'Mangal', sans-serif;
   --color-gold: var(--gold);
   --color-gold-soft: var(--gold-soft);
   --color-ivory: var(--ivory);
@@ -138,6 +139,11 @@
   unicode-bidi: plaintext;
   line-height: 2.1;
   word-spacing: 0.1em;
+}
+
+@utility font-devanagari {
+  font-family: var(--font-devanagari);
+  line-height: 1.7;
 }
 
 /* Metallic text: slow-moving gradient between two gold tones. */
